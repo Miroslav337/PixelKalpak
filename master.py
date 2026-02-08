@@ -15,7 +15,7 @@ def start():
     window.show()
     sys.exit(app.exec())
 
-conn = sqlite3.connect("db.sqlite3")
+conn = sqlite3.connect("data.sqlite3")
 cursor = conn.cursor()
 
 if __name__ == '__main__':
