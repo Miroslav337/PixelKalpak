@@ -1,0 +1,6 @@
+BG = "#cfcfcf"
+CARD = "#f4f4f4"
+ACCENT = "#A7ED85"
+BLUE = "#A1B5D8"
+BLUE_ACTIVE = "#7291C7"
+GRAY = "#e0e0e0"
