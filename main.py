@@ -1,6 +1,9 @@
 import customtkinter as ctk
 from PIL import Image
-import mainpage, user, admin, profile, constantes as cons
+import constantes as cons
+#from pages import admin, catalog, mainpage, profile, user
+from database import LibraryDB
+from pages import MainPage, CatalogPage, AdminPage, UsersPage, LogInPage
 
 ctk.set_appearance_mode("light")
 
@@ -9,6 +12,8 @@ ctk.set_appearance_mode("light")
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
+
+        self.db = LibraryDB()
 
         self.geometry("1200x720")
         self.configure(fg_color=cons.BG)
@@ -27,13 +32,13 @@ class App(ctk.CTk):
 
         self.pages = {}
 
-        for Page in (mainpage.MainPage, user.UsersPage, admin.AdminPage, profile.LogInPage):
-            page = Page(container)
+        for Page in (MainPage, CatalogPage, UsersPage, AdminPage, LogInPage):
+            page = Page(container, self.db)
             self.pages[Page] = page
 
             page.grid(row=1, column=0, sticky="nsew")
 
-        self.show_page(mainpage.MainPage)
+        self.show_page(MainPage)
 
     def topbar(self):
         frame = ctk.CTkFrame(self, height=60, fg_color=cons.CARD, corner_radius=15)
@@ -59,9 +64,10 @@ class App(ctk.CTk):
         nav_frame.grid(row=0, column=2, sticky="ew")
 
         buttons = [
-            ("main page", mainpage.MainPage),
-            ("admin", admin.AdminPage),
-            ("users", user.UsersPage),
+            ("main page", MainPage),
+            ("catalog page", CatalogPage),
+            ("admin", AdminPage),
+            ("users", UsersPage),
         ]
 
         for text, page in buttons:
@@ -76,7 +82,7 @@ class App(ctk.CTk):
             )
             btn.grid(row=0, column=buttons.index((text, page)), padx=5)
 
-        login = ctk.CTkButton(frame, text="log in", width=100, border_spacing=10, fg_color=cons.BLUE, text_color="black", hover_color=cons.BLUE_ACTIVE, command=lambda p=profile.LogInPage: self.show_page(p))
+        login = ctk.CTkButton(frame, text="log in", width=100, border_spacing=10, fg_color=cons.BLUE, text_color="black", hover_color=cons.BLUE_ACTIVE, command=lambda p=LogInPage: self.show_page(p))
         login.grid(row=0, column=3, padx=15, sticky="e")
 
         self.logo_img = logo_img
