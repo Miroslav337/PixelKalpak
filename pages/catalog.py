@@ -3,7 +3,7 @@ import constantes as cons
 from top_labels import CatalogBookInfo
 
 class CatalogPage(ctk.CTkFrame):
-    def __init__(self, parent, db):
+    def __init__(self, parent, db, controller):
         super().__init__(parent)
         self.db = db
         self.settings_window = None

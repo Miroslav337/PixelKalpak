@@ -3,7 +3,7 @@ from PIL import Image
 import constantes as cons, tables
 
 class MainPage(ctk.CTkFrame):
-    def __init__(self, parent, db):
+    def __init__(self, parent, db, controller):
         super().__init__(parent)
         self.db = db
 
@@ -20,8 +20,8 @@ class MainPage(ctk.CTkFrame):
         container.grid_columnconfigure(0, weight=1)
         container.grid_rowconfigure(2, weight=1)
 
-        self.card(container, "books on hands", "607", 0, 0, "image/on_hand.jpg", 80, 2)
-        self.card(container, "new readers", "1436", 0, 1, "image/reader.jpg", 80, 2)
+        self.card(container, "books on hands", "607", 0, 0, "image/on_hand.png", 80, 2)
+        self.card(container, "new readers", "1436", 0, 1, "image/reader.png", 80, 2)
 
         self.chart(container, "User statistics", 1, 0, 2, 2)
         self.chart(container, "books...", 3, 0, 2, 2)

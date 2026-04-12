@@ -4,7 +4,7 @@ import constantes as cons
 from top_labels import AddBook
 
 class AdminPage(ctk.CTkFrame):
-    def __init__(self, parent, db):
+    def __init__(self, parent, db, controller):
         super().__init__(parent)
         self.db = db
 

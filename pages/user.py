@@ -1,7 +1,7 @@
 from top_labels.top_level import *
 
 class UsersPage(ctk.CTkFrame):
-    def __init__(self, parent, db):
+    def __init__(self, parent, db, controller):
         super().__init__(parent)
         self.db = db
 

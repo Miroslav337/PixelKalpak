@@ -15,7 +15,7 @@ class ScrollTable(ctk.CTkFrame):
 
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         btn_frame.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
-        btn_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
+        btn_frame.grid_columnconfigure((0, 1, 2), weight=1)
         for i in range(len(data_versions)):
             btn = ctk.CTkButton(
                 btn_frame,
@@ -28,7 +28,8 @@ class ScrollTable(ctk.CTkFrame):
             btn.grid(row=0, column=i, padx=5, sticky="ew")
 
         search = ctk.CTkEntry(btn_frame, placeholder_text="🔍search")
-        search.grid(row=0, column=3, padx=5, sticky="ew")
+        search.grid(row=1, column=0, columnspan = 3, padx=5, sticky="ew", pady=(10, 0))
+        self.bind("<Enter>", lambda e: self.search())
 
         header_frame = ctk.CTkFrame(self, fg_color="transparent")
         header_frame.grid(row=1, column=0, sticky="ew", padx=5)
@@ -66,3 +67,6 @@ class ScrollTable(ctk.CTkFrame):
         self.clear()
         for item in self.data_versions[version_index]:
             self.add_row(item)
+
+    def search(self):
+        pass
