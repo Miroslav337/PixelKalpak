@@ -9,10 +9,10 @@ class TopLevel(ctk.CTkToplevel):
         self.width = width
         self.height = height
 
+        self.overrideredirect(True)
+
         current_os = platform.system()
-        if current_os in ["Windows", "Darwin"]:
-            self.overrideredirect(True)
-        elif current_os == "Linux":
+        if current_os == "Darwin":
             self.attributes('-type', 'dialog')
 
         master.update_idletasks()

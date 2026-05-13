@@ -85,19 +85,28 @@ class App(ctk.CTk):
         column_index = 0
         for text, page_class in buttons_data:
             if page_class == current_page_class:
-                continue 
-
-            self.nav_frame.grid_columnconfigure(column_index, weight=1)
-            btn = ctk.CTkButton(
-                self.nav_frame,
-                text=text,
-                fg_color="transparent",
-                text_color="black",
-                hover_color=cons.GRAY,
-                command=lambda p=page_class: self.show_page(p)
-            )
-            btn.grid(row=0, column=column_index, padx=5, sticky="ew")
-            column_index += 1
+                self.nav_frame.grid_columnconfigure(column_index, weight=1)
+                btn = ctk.CTkButton(
+                    self.nav_frame,
+                    text=text,
+                    fg_color="transparent",
+                    text_color=cons.BLUE_ACTIVE,
+                    command=lambda p=page_class: self.show_page(p)
+                )
+                btn.grid(row=0, column=column_index, padx=5, sticky="ew")
+                column_index += 1
+            else:
+                self.nav_frame.grid_columnconfigure(column_index, weight=1)
+                btn = ctk.CTkButton(
+                    self.nav_frame,
+                    text=text,
+                    fg_color="transparent",
+                    text_color="black",
+                    hover_color=cons.GRAY,
+                    command=lambda p=page_class: self.show_page(p)
+                )
+                btn.grid(row=0, column=column_index, padx=5, sticky="ew")
+                column_index += 1
 
     def show_page(self, page_class):
         self.pages[page_class].tkraise()
