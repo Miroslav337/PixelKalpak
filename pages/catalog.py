@@ -43,7 +43,7 @@ class CatalogPage(ctk.CTkFrame):
             hover_color="#8fdb6e",
             width=140,
             command=lambda: self.open_popup(
-                "add_window", AddBook, self.db, self.i18n, self.refresh
+                "add_window", AddBook, self.db, self.i18n, self._on_book_added
             ),
         )
         self._add_book_btn.grid(row=0, column=0, sticky="w")
@@ -127,6 +127,13 @@ class CatalogPage(ctk.CTkFrame):
         )
         for w in (frame, title_lbl, author_lbl, avail_lbl):
             w.bind("<Button-1>", lambda e, cmd=open_cmd: cmd())
+
+    def _on_book_added(self):
+        self.refresh()
+        for cls, page in self.controller.pages.items():
+            if cls.__name__ == "MainPage":
+                page.refresh()
+                break
 
     def open_popup(self, attr_name, popup_class, *args):
         current = getattr(self, attr_name, None)

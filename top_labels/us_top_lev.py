@@ -1,7 +1,7 @@
 from .top_level import TopLevel
 import customtkinter as ctk
 import constantes as cons
-from datetime import datetime, date
+from datetime import date, timedelta
 
 
 class AddUserPopup(TopLevel):
@@ -48,11 +48,16 @@ class AddUserPopup(TopLevel):
         ctk.CTkLabel(form, text=self.i18n.t("label.gender"), anchor="w").grid(
             row=4, column=0, sticky="w"
         )
-        self.gender_var = ctk.StringVar(value="Не указан")
+        self._gender_labels = [
+            self.i18n.t("gender.unspecified"),
+            self.i18n.t("gender.m"),
+            self.i18n.t("gender.f"),
+        ]
+        self.gender_var = ctk.StringVar(value=self._gender_labels[0])
         ctk.CTkOptionMenu(
             form,
             variable=self.gender_var,
-            values=["Не указан", "М", "Ж"],
+            values=self._gender_labels,
             fg_color=cons.CARD,
             button_color=cons.BLUE,
             button_hover_color=cons.BLUE_ACTIVE,
@@ -86,7 +91,12 @@ class AddUserPopup(TopLevel):
             return
         phone = self.phone_entry.get().strip() or None
         gender_val = self.gender_var.get()
-        gender = None if gender_val == "Не указан" else gender_val
+        _gender_db = {
+            self._gender_labels[0]: None,
+            self._gender_labels[1]: "М",
+            self._gender_labels[2]: "Ж",
+        }
+        gender = _gender_db.get(gender_val)
         self.db.add_user(full_name, phone, gender)
         self.refresh_callback()
         self.on_close()
@@ -245,6 +255,8 @@ class UserViewPopup(TopLevel):
             self._edit_win = UserEditPopup(
                 self.winfo_toplevel(), self.db, self.i18n,
                 self.user_id, self._on_edit_saved,
+                parent_popup=self,
+                controller=self.controller,
             )
         else:
             self._edit_win.focus()
@@ -259,9 +271,12 @@ class UserViewPopup(TopLevel):
     def _open_issue(self):
         win = getattr(self, "_issue_win", None)
         if win is None or not win.winfo_exists():
+            loan_days = self.controller.settings.loan_days if self.controller else 30
             self._issue_win = IssueBookPopup(
                 self.winfo_toplevel(), self.db, self.i18n,
                 self.user_id, self._on_issue_saved,
+                loan_days=loan_days,
+                parent_popup=self,
             )
         else:
             self._issue_win.focus()
@@ -269,6 +284,10 @@ class UserViewPopup(TopLevel):
     def _on_issue_saved(self):
         if self.refresh_callback:
             self.refresh_callback()
+        if self.controller:
+            for cls, page in self.controller.pages.items():
+                if cls.__name__ in ("MainPage", "CatalogPage"):
+                    page.refresh()
         for w in self.main_frame.winfo_children():
             w.destroy()
         self._build()
@@ -283,12 +302,13 @@ class UserViewPopup(TopLevel):
 
 
 class UserEditPopup(TopLevel):
-    def __init__(self, master, db, i18n, user_id, refresh_callback):
-        super().__init__(master, title=i18n.t("popup.edit_user"), width=380, height=480)
+    def __init__(self, master, db, i18n, user_id, refresh_callback, parent_popup=None, controller=None):
+        super().__init__(master, title=i18n.t("popup.edit_user"), width=380, height=560, parent_popup=parent_popup)
         self.db = db
         self.i18n = i18n
         self.user_id = user_id
         self.refresh_callback = refresh_callback
+        self.controller = controller
         self._build()
 
     def _build(self):
@@ -331,12 +351,18 @@ class UserEditPopup(TopLevel):
 
         ctk.CTkLabel(form, text=self.i18n.t("label.gender"), anchor="w").grid(
             row=r, column=0, sticky="w", padx=6); r += 1
-        gender_val = user.get("gender") or "Не указан"
-        self.gender_var = ctk.StringVar(value=gender_val)
+        self._gender_labels = [
+            self.i18n.t("gender.unspecified"),
+            self.i18n.t("gender.m"),
+            self.i18n.t("gender.f"),
+        ]
+        _db_to_label = {"М": self._gender_labels[1], "Ж": self._gender_labels[2]}
+        gender_display = _db_to_label.get(user.get("gender") or "", self._gender_labels[0])
+        self.gender_var = ctk.StringVar(value=gender_display)
         ctk.CTkOptionMenu(
             form,
             variable=self.gender_var,
-            values=["Не указан", "М", "Ж"],
+            values=self._gender_labels,
             fg_color=cons.CARD,
             button_color=cons.BLUE,
             button_hover_color=cons.BLUE_ACTIVE,
@@ -372,6 +398,12 @@ class UserEditPopup(TopLevel):
             command=self._save,
         ).grid(row=0, column=1, sticky="ew", padx=(5, 0))
 
+        ctk.CTkButton(
+            btn_frame, text=self.i18n.t("btn.delete"),
+            fg_color="#d95050", hover_color="#b03030", text_color="white",
+            command=self._open_delete,
+        ).grid(row=1, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+
     def _grid_section_header(self, parent, title: str, row: int):
         header = ctk.CTkFrame(parent, fg_color=cons.ACCENT, corner_radius=6, height=28)
         header.grid(row=row, column=0, sticky="ew", padx=4, pady=(4, 2))
@@ -386,8 +418,12 @@ class UserEditPopup(TopLevel):
             self.error_label.configure(text=self.i18n.t("msg.field_required"))
             return
         phone = self.phone_entry.get().strip() or None
-        gender_val = self.gender_var.get()
-        gender = None if gender_val == "Не указан" else gender_val
+        _label_to_db = {
+            self._gender_labels[0]: None,
+            self._gender_labels[1]: "М",
+            self._gender_labels[2]: "Ж",
+        }
+        gender = _label_to_db.get(self.gender_var.get())
         notes = self.notes_box.get("1.0", "end").strip() or None
 
         self.db.edit_user(self.user_id, full_name=full_name, phone=phone, gender=gender)
@@ -395,29 +431,61 @@ class UserEditPopup(TopLevel):
         self.refresh_callback()
         self.on_close()
 
+    def _open_delete(self):
+        user_row = self.db.get_user(self.user_id)
+        user = dict(user_row) if user_row else {}
+        name = user.get("full_name", "?")
+        win = getattr(self, "_delete_win", None)
+        if win is None or not win.winfo_exists():
+            self._delete_win = ConfirmDeletePopup(
+                self.winfo_toplevel(), self.i18n, name,
+                self._do_delete,
+                parent_popup=self,
+            )
+        else:
+            self._delete_win.focus()
+
+    def _do_delete(self):
+        self.db.delete_user(self.user_id)
+        if self.controller:
+            for cls, page in self.controller.pages.items():
+                if cls.__name__ in ("UsersPage", "MainPage"):
+                    page.refresh()
+        elif self.refresh_callback:
+            self.refresh_callback()
+        if hasattr(self, "_delete_win") and self._delete_win.winfo_exists():
+            self._delete_win._restore_parent = False
+
 
 class ConfirmDeletePopup(TopLevel):
     def __init__(self, master, i18n, name: str, on_confirm,
-                 msg_key="msg.confirm_delete"):
-        super().__init__(master, title=i18n.t("btn.delete"), width=320, height=170)
+                 msg_key="msg.confirm_delete", parent_popup=None,
+                 title_key="btn.delete", title_fg_color="#d95050"):
+        super().__init__(master, title=i18n.t(title_key), width=320, height=170, parent_popup=parent_popup)
         self.i18n = i18n
         self._on_confirm = on_confirm
         self._msg_key = msg_key
+        self._title_key = title_key
+        self._title_fg_color = title_fg_color
         self._build(name)
 
     def _build(self, name: str):
+        is_delete = self._title_fg_color == "#d95050"
+        text_color = "white" if is_delete else "black"
+        hover_color = "#c03030" if is_delete else "#388E3C"
+
         title_bar = ctk.CTkFrame(
-            self.main_frame, fg_color="#d95050", corner_radius=0, height=40
+            self.main_frame, fg_color=self._title_fg_color, corner_radius=0, height=40
         )
         title_bar.pack(fill="x")
         title_bar.pack_propagate(False)
         ctk.CTkLabel(
-            title_bar, text=self.i18n.t("btn.delete"),
-            font=("Arial", 14, "bold"), text_color="white",
+            title_bar, text=self.i18n.t(self._title_key),
+            font=("Arial", 14, "bold"), text_color=text_color,
         ).pack(side="left", padx=12, pady=8)
         ctk.CTkButton(
             title_bar, text="✕", width=32, height=28,
-            fg_color="transparent", hover_color="#c03030", text_color="white",
+            fg_color="transparent", hover_color=hover_color, text_color=text_color,
             command=self.on_close,
         ).pack(side="right", padx=4, pady=4)
 
@@ -438,9 +506,10 @@ class ConfirmDeletePopup(TopLevel):
             command=self.on_close,
         ).grid(row=0, column=0, sticky="ew", padx=(0, 5))
 
+        confirm_fg = self._title_fg_color
         ctk.CTkButton(
             btn_frame, text=self.i18n.t("btn.yes"),
-            fg_color="#d95050", hover_color="#c03030", text_color="white",
+            fg_color=confirm_fg, hover_color=hover_color, text_color=text_color,
             command=self._confirm,
         ).grid(row=0, column=1, sticky="ew", padx=(5, 0))
 
@@ -450,12 +519,13 @@ class ConfirmDeletePopup(TopLevel):
 
 
 class IssueBookPopup(TopLevel):
-    def __init__(self, master, db, i18n, user_id, refresh_callback):
-        super().__init__(master, title=i18n.t("btn.issue"), width=420, height=460)
+    def __init__(self, master, db, i18n, user_id, refresh_callback, loan_days=30, parent_popup=None):
+        super().__init__(master, title=i18n.t("btn.issue"), width=420, height=500, parent_popup=parent_popup)
         self.db = db
         self.i18n = i18n
         self.user_id = user_id
         self.refresh_callback = refresh_callback
+        self._loan_days = loan_days
         self._book_map = {}          # label → book_id
         self._btn_map = {}           # label → CTkButton
         self._selected_book_id = None
@@ -490,18 +560,22 @@ class IssueBookPopup(TopLevel):
             command=self.on_close,
         ).pack(side="right", padx=4, pady=4)
 
-        # ── Buttons — pinned to bottom before form so they're always visible ──
+        # ── Buttons + error — pinned to bottom before form ─────────────
         btn_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         btn_frame.pack(side="bottom", fill="x", padx=24, pady=(0, 16))
-        btn_frame.grid_columnconfigure(0, weight=1)
-        btn_frame.grid_columnconfigure(1, weight=1)
+        btn_frame.grid_columnconfigure((0, 1), weight=1)
+
+        self._error_label = ctk.CTkLabel(
+            btn_frame, text="", text_color="red", anchor="w"
+        )
+        self._error_label.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 4))
 
         ctk.CTkButton(
             btn_frame, text=self.i18n.t("btn.cancel"),
             fg_color="transparent", border_width=1,
             text_color=cons.BLUE_ACTIVE, border_color=cons.BLUE_ACTIVE,
             command=self.on_close,
-        ).grid(row=0, column=0, sticky="ew", padx=(0, 5))
+        ).grid(row=1, column=0, sticky="ew", padx=(0, 5))
 
         self._issue_btn = ctk.CTkButton(
             btn_frame, text=self.i18n.t("btn.issue"),
@@ -509,7 +583,7 @@ class IssueBookPopup(TopLevel):
             command=self._issue,
             state="disabled" if not self._book_map else "normal",
         )
-        self._issue_btn.grid(row=0, column=1, sticky="ew", padx=(5, 0))
+        self._issue_btn.grid(row=1, column=1, sticky="ew", padx=(5, 0))
 
         # ── Form content ────────────────────────────────────────────
         form = ctk.CTkFrame(self.main_frame, fg_color="transparent")
@@ -541,14 +615,40 @@ class IssueBookPopup(TopLevel):
 
         ctk.CTkLabel(
             form,
-            text=self.i18n.t("label.return_deadline") + " (DD.MM.YYYY)",
+            text=self.i18n.t("label.return_deadline"),
             anchor="w",
         ).grid(row=r, column=0, sticky="w"); r += 1
-        self._deadline_entry = ctk.CTkEntry(form, placeholder_text="DD.MM.YYYY")
-        self._deadline_entry.grid(row=r, column=0, sticky="ew", pady=(2, 10)); r += 1
 
-        self._error_label = ctk.CTkLabel(form, text="", text_color="red", anchor="w")
-        self._error_label.grid(row=r, column=0, sticky="w")
+        _default = date.today() + timedelta(days=self._loan_days)
+        date_row = ctk.CTkFrame(form, fg_color="transparent")
+        date_row.grid(row=r, column=0, sticky="ew", pady=(2, 10)); r += 1
+        date_row.grid_columnconfigure(0, weight=1)
+        date_row.grid_columnconfigure(1, weight=1)
+        date_row.grid_columnconfigure(2, weight=2)
+
+        self._day_var   = ctk.StringVar(value=f"{_default.day:02d}")
+        self._month_var = ctk.StringVar(value=f"{_default.month:02d}")
+        self._year_var  = ctk.StringVar(value=str(_default.year))
+
+        ctk.CTkOptionMenu(
+            date_row, variable=self._day_var,
+            values=[f"{d:02d}" for d in range(1, 32)],
+            fg_color=cons.CARD, button_color=cons.BLUE,
+            button_hover_color=cons.BLUE_ACTIVE, text_color="black",
+        ).grid(row=0, column=0, sticky="ew", padx=(0, 4))
+        ctk.CTkOptionMenu(
+            date_row, variable=self._month_var,
+            values=[f"{m:02d}" for m in range(1, 13)],
+            fg_color=cons.CARD, button_color=cons.BLUE,
+            button_hover_color=cons.BLUE_ACTIVE, text_color="black",
+        ).grid(row=0, column=1, sticky="ew", padx=4)
+        ctk.CTkOptionMenu(
+            date_row, variable=self._year_var,
+            values=[str(date.today().year + i) for i in range(4)],
+            fg_color=cons.CARD, button_color=cons.BLUE,
+            button_hover_color=cons.BLUE_ACTIVE, text_color="black",
+        ).grid(row=0, column=2, sticky="ew", padx=(4, 0))
+
 
     def _build_book_list(self, query: str):
         for w in self._book_list_frame.winfo_children():
@@ -587,13 +687,12 @@ class IssueBookPopup(TopLevel):
             self._error_label.configure(text=self.i18n.t("msg.field_required"))
             return
 
-        deadline_str = self._deadline_entry.get().strip()
-        if not deadline_str:
-            self._error_label.configure(text=self.i18n.t("msg.field_required"))
-            return
-
         try:
-            deadline = datetime.strptime(deadline_str, "%d.%m.%Y").date()
+            deadline = date(
+                int(self._year_var.get()),
+                int(self._month_var.get()),
+                int(self._day_var.get()),
+            )
         except ValueError:
             self._error_label.configure(text=self.i18n.t("msg.invalid_date"))
             return

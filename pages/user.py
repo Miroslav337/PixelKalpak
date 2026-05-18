@@ -1,7 +1,7 @@
 import customtkinter as ctk
 import constantes as cons
 import tables
-from top_labels import AddUserPopup, UserViewPopup, ConfirmDeletePopup, ExportPopup
+from top_labels import AddUserPopup, UserViewPopup, ExportPopup
 
 
 class UsersPage(ctk.CTkFrame):
@@ -17,10 +17,9 @@ class UsersPage(ctk.CTkFrame):
         self.grid_rowconfigure(0, weight=1)
 
         self._col_configs = [
-            {"weight": 2},               # name
-            {"weight": 2},               # phone
-            {"weight": 1},               # status
-            {"weight": 0, "minsize": 60},  # delete btn
+            {"weight": 2},  # name
+            {"weight": 2},  # phone
+            {"weight": 1},  # status
         ]
 
         self._build()
@@ -45,7 +44,7 @@ class UsersPage(ctk.CTkFrame):
             hover_color="#8fdb6e",
             width=140,
             command=lambda: self.open_popup(
-                "add_user_window", AddUserPopup, self.db, self.i18n, self.refresh
+                "add_user_window", AddUserPopup, self.db, self.i18n, self._on_user_added
             ),
         )
         self._add_user_btn.grid(row=0, column=0, sticky="w")
@@ -74,7 +73,6 @@ class UsersPage(ctk.CTkFrame):
                 self.i18n.t("label.full_name"),
                 self.i18n.t("label.phone"),
                 self.i18n.t("label.status"),
-                "",
             ],
             data_versions=[[]],
             table_color=cons.CARD,
@@ -127,14 +125,6 @@ class UsersPage(ctk.CTkFrame):
         status_lbl = ctk.CTkLabel(frame, text=status, anchor="w", text_color=status_color)
         status_lbl.grid(row=0, column=2, sticky="ew", padx=(8, 0), pady=6)
 
-        if self.controller.is_logged_in:
-            ctk.CTkButton(
-                frame, text="−", width=30, height=26,
-                fg_color="#d95050", hover_color="#c03030",
-                text_color="white", font=("Arial", 16, "bold"),
-                command=lambda uid=user_id: self._delete_user(uid),
-            ).grid(row=0, column=3, padx=8, pady=5)
-
         open_cmd = lambda uid=user_id: self.open_popup(
             "view_window", UserViewPopup, self.db, self.i18n, uid, self.refresh, self.controller
         )
@@ -148,14 +138,10 @@ class UsersPage(ctk.CTkFrame):
         else:
             current.focus()
 
-    def _delete_user(self, user_id: int):
-        user = next((u for u in self._all_users if u["id"] == user_id), None)
-        name = user.get("full_name", "?") if user else "?"
-        self.open_popup(
-            "confirm_delete_window", ConfirmDeletePopup,
-            self.i18n, name, lambda uid=user_id: self._do_delete(uid),
-        )
-
-    def _do_delete(self, user_id: int):
-        self.db.delete_user(user_id)
+    def _on_user_added(self):
         self.refresh()
+        for cls, page in self.controller.pages.items():
+            if cls.__name__ == "MainPage":
+                page.refresh()
+                break
+

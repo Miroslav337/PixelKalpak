@@ -79,5 +79,9 @@
   "msg.date_in_past": "Date cannot be in the past",
   "msg.confirm_return": "Mark '{name}' as returned?",
   "btn.return": "Return",
-  "btn.return_book": "Accept return"
+  "btn.return_book": "Accept return",
+  "label.loan_days": "Default loan days",
+  "gender.unspecified": "Unspecified",
+  "gender.m": "M",
+  "gender.f": "F"
 }

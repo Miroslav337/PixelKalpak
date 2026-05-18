@@ -175,12 +175,22 @@ class BookViewPopup(TopLevel):
             self.refresh_callback()
         self._build()
 
+    def _refresh_all(self):
+        if self.refresh_callback:
+            self.refresh_callback()
+        if self.controller:
+            for cls, page in self.controller.pages.items():
+                if cls.__name__ == "MainPage":
+                    page.refresh()
+                    break
+
     def _open_edit(self):
         win = getattr(self, "_edit_win", None)
         if win is None or not win.winfo_exists():
             self._edit_win = EditBookPopup(
                 self.winfo_toplevel(), self.db, self.i18n,
                 self.book_id, self._reload,
+                parent_popup=self,
             )
         else:
             self._edit_win.focus()
@@ -192,12 +202,8 @@ class BookViewPopup(TopLevel):
         if win is None or not win.winfo_exists():
             self._delete_win = DeleteBook(
                 self.winfo_toplevel(), self.db, self.i18n,
-                self.book_id, book_title, self._on_deleted,
+                self.book_id, book_title, self._refresh_all,
+                parent_popup=self,
             )
         else:
             self._delete_win.focus()
-
-    def _on_deleted(self):
-        if self.refresh_callback:
-            self.refresh_callback()
-        self.on_close()

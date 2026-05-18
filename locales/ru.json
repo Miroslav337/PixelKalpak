@@ -79,5 +79,9 @@
   "msg.date_in_past": "Дата не может быть в прошлом",
   "msg.confirm_return": "Отметить «{name}» как возвращённую?",
   "btn.return": "Вернуть",
-  "btn.return_book": "Принять возврат"
+  "btn.return_book": "Принять возврат",
+  "label.loan_days": "Дней на возврат",
+  "gender.unspecified": "Не указан",
+  "gender.m": "М",
+  "gender.f": "Ж"
 }

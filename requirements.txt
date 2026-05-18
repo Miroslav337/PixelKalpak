@@ -1,4 +1,4 @@
-customtkinter
-pillow
-matplotlib
-openpyxl
+customtkinter==5.2.2
+Pillow==12.2.0
+matplotlib==3.10.9
+openpyxl==3.1.5

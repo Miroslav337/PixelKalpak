@@ -182,6 +182,7 @@ class LibraryDB:
         genres = fields.pop("genres", None)
 
         db_fields = {k: v for k, v in fields.items() if k in allowed | {"author_id"}}
+        changed = bool(db_fields)
         if db_fields:
             set_clause = ", ".join(f"{col} = ?" for col in db_fields)
             self.cursor.execute(
@@ -197,9 +198,10 @@ class LibraryDB:
                     "INSERT OR IGNORE INTO Book_Genres (book_id, genre_id) VALUES (?, ?)",
                     (book_id, genre_id),
                 )
+            changed = True
 
         self.conn.commit()
-        return self.cursor.rowcount > 0
+        return changed
 
     def delete_book(self, book_id: int) -> bool:
         self.cursor.execute("DELETE FROM Lease_History WHERE book_id = ?", (book_id,))
@@ -301,6 +303,15 @@ class LibraryDB:
         return self.cursor.rowcount > 0
 
     def delete_user(self, user_id: int) -> bool:
+        active = self.conn.execute(
+            "SELECT book_id FROM Lease_History WHERE user_id = ? AND status = 'на руках'",
+            (user_id,)
+        ).fetchall()
+        for row in active:
+            self.cursor.execute(
+                "UPDATE Books SET available_count = available_count + 1 WHERE id = ?",
+                (row["book_id"],)
+            )
         self.cursor.execute("DELETE FROM Lease_History WHERE user_id = ?", (user_id,))
         self.cursor.execute("DELETE FROM Users WHERE id = ?", (user_id,))
         self.conn.commit()

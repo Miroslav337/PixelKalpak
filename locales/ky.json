@@ -79,5 +79,9 @@
   "msg.date_in_past": "Дата өткөндө болушу мүмкүн эмес",
   "msg.confirm_return": "«{name}» кайтарылды деп белгилейби?",
   "btn.return": "Кайтаруу",
-  "btn.return_book": "Кайтарууну кабыл алуу"
+  "btn.return_book": "Кайтарууну кабыл алуу",
+  "label.loan_days": "Кайтаруу күндөрү",
+  "gender.unspecified": "Белгисиз",
+  "gender.m": "Эркек",
+  "gender.f": "Аял"
 }

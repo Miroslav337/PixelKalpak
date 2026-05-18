@@ -223,6 +223,30 @@ class ProfilePage(ctk.CTkFrame):
             btn.pack(side="left", padx=4)
             self._accent_btns[name] = btn
 
+        ctk.CTkFrame(card, height=1, fg_color="gray80").grid(
+            row=5, column=0, columnspan=2, sticky="ew", padx=20
+        )
+
+        ctk.CTkLabel(card, text=self.i18n.t("label.loan_days"), font=("Arial", 14)).grid(
+            row=6, column=0, padx=(30, 20), pady=(14, 24), sticky="w"
+        )
+        loan_ctrl = ctk.CTkFrame(card, fg_color="transparent")
+        loan_ctrl.grid(row=6, column=1, padx=(0, 30), pady=(14, 24), sticky="e")
+
+        vcmd = (card.register(lambda v: v == "" or (v.isdigit() and len(v) <= 4)), "%P")
+        self._loan_entry = ctk.CTkEntry(
+            loan_ctrl, width=70,
+            validate="key", validatecommand=vcmd,
+        )
+        self._loan_entry.insert(0, str(self.controller.settings.loan_days))
+        self._loan_entry.pack(side="left", padx=(0, 6))
+
+        ctk.CTkButton(
+            loan_ctrl, text=self.i18n.t("btn.save"), width=80,
+            fg_color=cons.BLUE, hover_color=cons.BLUE_ACTIVE, text_color="black",
+            command=self._save_loan_days,
+        ).pack(side="left")
+
     # ─────────────────────────── ADMINS SECTION ─────────────────────
 
     def _render_admins(self):
@@ -396,3 +420,10 @@ class ProfilePage(ctk.CTkFrame):
         for n, btn in self._accent_btns.items():
             btn.configure(border_width=3 if n == name else 0)
         self.controller.apply_accent(name)
+
+    def _save_loan_days(self):
+        val = self._loan_entry.get().strip()
+        days = int(val) if val.isdigit() and int(val) > 0 else 30
+        self.controller.settings.set("loan_days", days)
+        self._loan_entry.delete(0, "end")
+        self._loan_entry.insert(0, str(days))

@@ -3,7 +3,7 @@ import customtkinter as ctk
 from PIL import Image
 import constantes as cons
 from database import LibraryDB
-from locale import I18n
+from i18n import I18n
 from settings import AppSettings, ACCENT_PRESETS
 from pages import MainPage, CatalogPage, UsersPage, LogInPage, ProfilePage
 

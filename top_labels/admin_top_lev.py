@@ -122,8 +122,8 @@ class AddBook(TopLevel):
 
 
 class DeleteBook(TopLevel):
-    def __init__(self, master, db, i18n, book_id, book_title, refresh_callback):
-        super().__init__(master, title=i18n.t("btn.delete"), width=320, height=170)
+    def __init__(self, master, db, i18n, book_id, book_title, refresh_callback, parent_popup=None):
+        super().__init__(master, title=i18n.t("btn.delete"), width=320, height=170, parent_popup=parent_popup)
         self.db = db
         self.i18n = i18n
         self.book_id = book_id
@@ -170,12 +170,13 @@ class DeleteBook(TopLevel):
     def _confirm(self):
         self.db.delete_book(self.book_id)
         self.refresh_callback()
+        self._restore_parent = False
         self.on_close()
 
 
 class EditBookPopup(TopLevel):
-    def __init__(self, master, db, i18n, book_id, refresh_callback):
-        super().__init__(master, title=i18n.t("popup.edit_book"), width=420, height=500)
+    def __init__(self, master, db, i18n, book_id, refresh_callback, parent_popup=None):
+        super().__init__(master, title=i18n.t("popup.edit_book"), width=420, height=500, parent_popup=parent_popup)
         self.db = db
         self.i18n = i18n
         self.book_id = book_id
