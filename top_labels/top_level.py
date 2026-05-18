@@ -1,5 +1,5 @@
 import customtkinter as ctk
-import platform, constantes as cons
+import constantes as cons
 
 class TopLevel(ctk.CTkToplevel):
     def __init__(self, master, title="Окно", width=300, height=200):
@@ -11,24 +11,25 @@ class TopLevel(ctk.CTkToplevel):
 
         self.overrideredirect(True)
 
-        current_os = platform.system()
-        if current_os == "Darwin":
-            self.attributes('-type', 'dialog')
-
         master.update_idletasks()
         x = master.winfo_rootx() + (master.winfo_width() // 2) - (self.width // 2)
         y = master.winfo_rooty() + (master.winfo_height() // 2) - (self.height // 2)
         self.geometry(f"{self.width}x{self.height}+{x}+{y}")
 
-
-
         self.attributes('-topmost', True)
         self.bind("<Escape>", lambda e: self.on_close())
         self.focus_set()
-        self.grab_set()
 
         self.main_frame = ctk.CTkFrame(self)
         self.main_frame.pack(fill="both", expand=True)
+
+        self.after_idle(self._safe_grab)
+
+    def _safe_grab(self):
+        try:
+            self.grab_set()
+        except Exception:
+            pass
 
     def on_close(self):
         self.grab_release()

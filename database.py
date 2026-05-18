@@ -15,6 +15,7 @@ class LibraryDB:
         self.cursor.execute("PRAGMA foreign_keys = ON;")
         self._create_tables()
         self._migrate()
+        self._seed_defaults()
 
     # ─────────────────────────── SCHEMA ────────────────────────────
 
@@ -86,19 +87,17 @@ class LibraryDB:
         ''')
         self.conn.commit()
 
+    def _seed_defaults(self):
+        count = self.conn.execute("SELECT COUNT(*) FROM Admins").fetchone()[0]
+        if count == 0:
+            self.add_admin("admin", "123", "superadmin")
+
     def _migrate(self):
         """Добавляет новые колонки в уже существующую БД без потери данных."""
         migrations = [
             ("Users", "gender",            "ALTER TABLE Users ADD COLUMN gender TEXT"),
             ("Users", "registration_date", "ALTER TABLE Users ADD COLUMN registration_date TEXT NOT NULL DEFAULT ''"),
         ]
-        existing = {
-            (row[0], row[1])
-            for tbl in ["Users"]
-            for row in self.conn.execute(f"PRAGMA table_info({tbl})").fetchall()
-            for _ in [None]  # dummy
-        }
-        # rebuild properly
         existing_cols = {}
         for tbl in ["Users", "Books", "Admins", "Lease_History", "User_Details"]:
             cols = self.conn.execute(f"PRAGMA table_info({tbl})").fetchall()
@@ -203,6 +202,7 @@ class LibraryDB:
         return self.cursor.rowcount > 0
 
     def delete_book(self, book_id: int) -> bool:
+        self.cursor.execute("DELETE FROM Lease_History WHERE book_id = ?", (book_id,))
         self.cursor.execute("DELETE FROM Books WHERE id = ?", (book_id,))
         self.conn.commit()
         return self.cursor.rowcount > 0
@@ -301,6 +301,7 @@ class LibraryDB:
         return self.cursor.rowcount > 0
 
     def delete_user(self, user_id: int) -> bool:
+        self.cursor.execute("DELETE FROM Lease_History WHERE user_id = ?", (user_id,))
         self.cursor.execute("DELETE FROM Users WHERE id = ?", (user_id,))
         self.conn.commit()
         return self.cursor.rowcount > 0
@@ -453,7 +454,8 @@ class LibraryDB:
     def get_active_leases(self):
         return self.conn.execute(
             """SELECT Lease_History.id, Users.full_name, Books.title,
-                      Lease_History.issue_date, Lease_History.return_deadline
+                      Lease_History.issue_date, Lease_History.return_deadline,
+                      Lease_History.user_id, Lease_History.book_id
                FROM Lease_History
                JOIN Users ON Lease_History.user_id = Users.id
                JOIN Books ON Lease_History.book_id = Books.id
@@ -465,7 +467,8 @@ class LibraryDB:
         today = date.today().isoformat()
         return self.conn.execute(
             """SELECT Lease_History.id, Users.full_name, Books.title,
-                      Lease_History.issue_date, Lease_History.return_deadline
+                      Lease_History.issue_date, Lease_History.return_deadline,
+                      Lease_History.user_id, Lease_History.book_id
                FROM Lease_History
                JOIN Users ON Lease_History.user_id = Users.id
                JOIN Books ON Lease_History.book_id = Books.id

@@ -1,83 +1,161 @@
-from top_labels.top_level import *
 import customtkinter as ctk
-from tkinter import filedialog
+import constantes as cons
+import tables
+from top_labels import AddUserPopup, UserViewPopup, ConfirmDeletePopup, ExportPopup
 
 
 class UsersPage(ctk.CTkFrame):
-    def __init__(self, parent, db, controller):
+    def __init__(self, parent, db, i18n, controller):
         super().__init__(parent)
         self.db = db
+        self.i18n = i18n
         self.controller = controller
+        self.configure(fg_color=cons.BG)
 
+        self._all_users = []
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
 
-        self.users_page()
+        self._col_configs = [
+            {"weight": 2},               # name
+            {"weight": 2},               # phone
+            {"weight": 1},               # status
+            {"weight": 0, "minsize": 60},  # delete btn
+        ]
 
-    def users_page(self):
-        container = ctk.CTkFrame(self, fg_color=cons.BG)
-        container.grid(row=1, column=0, sticky="nsew")
+        self._build()
+        self.refresh()
 
-        container.grid_columnconfigure(0, weight=1)
-        container.grid_rowconfigure(1, weight=1)
+    def _build(self):
+        outer = ctk.CTkFrame(self, fg_color=cons.BG)
+        outer.grid(row=0, column=0, sticky="nsew", padx=20, pady=16)
+        outer.grid_columnconfigure(0, weight=1)
+        outer.grid_rowconfigure(1, weight=1)
 
-        # 🔹 HEADER
-        header = ctk.CTkFrame(container, fg_color="transparent")
-        header.grid(row=0, column=0, sticky="ew", padx=20, pady=10)
+        # ── action buttons ─────────────────────────────────────────
+        action_row = ctk.CTkFrame(outer, fg_color="transparent")
+        action_row.grid(row=0, column=0, sticky="ew", pady=(0, 12))
+        action_row.grid_columnconfigure(1, weight=1)
 
-        title = ctk.CTkLabel(header, text="Users", font=("Arial", 20, "bold"))
-        title.pack(side="left")
-
-        # кнопки справа
-        btn_frame = ctk.CTkFrame(header, fg_color="transparent")
-        btn_frame.pack(side="right")
-
-        add_btn = ctk.CTkButton(btn_frame, text="Add", width=80)
-        add_btn.pack(side="left", padx=5)
-
-        delete_btn = ctk.CTkButton(btn_frame, text="Delete", width=80)
-        delete_btn.pack(side="left", padx=5)
-
-        export_btn = ctk.CTkButton(
-            btn_frame,
-            text="Export",
-            width=80,
-            command=self.export_users
+        self._add_user_btn = ctk.CTkButton(
+            action_row,
+            text=self.i18n.t("popup.add_user"),
+            fg_color=cons.ACCENT,
+            text_color="black",
+            hover_color="#8fdb6e",
+            width=140,
+            command=lambda: self.open_popup(
+                "add_user_window", AddUserPopup, self.db, self.i18n, self.refresh
+            ),
         )
-        export_btn.pack(side="left", padx=5)
+        self._add_user_btn.grid(row=0, column=0, sticky="w")
+        if not self.controller.is_logged_in:
+            self._add_user_btn.grid_remove()
 
-        # 🔹 СПИСОК ПОЛЬЗОВАТЕЛЕЙ (scroll)
-        users_frame = ctk.CTkScrollableFrame(container)
-        users_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=10)
+        ctk.CTkButton(
+            action_row,
+            text=self.i18n.t("btn.export"),
+            fg_color=cons.BLUE,
+            text_color="black",
+            hover_color=cons.BLUE_ACTIVE,
+            width=120,
+            command=lambda: self.open_popup(
+                "export_window", ExportPopup,
+                self.i18n,
+                [dict(u) for u in self.db.get_all_users()],
+                "users",
+            ),
+        ).grid(row=0, column=2, sticky="e")
 
-        # 🔹 пример данных (потом заменишь на db)
-        users = ["Murat", "Ali", "Bek", "Azamat", "Nursultan"]
+        # ── table ───────────────────────────────────────────────────
+        self._table = tables.ScrollTable(
+            outer,
+            columns=[
+                self.i18n.t("label.full_name"),
+                self.i18n.t("label.phone"),
+                self.i18n.t("label.status"),
+                "",
+            ],
+            data_versions=[[]],
+            table_color=cons.CARD,
+            row_factory=self._make_row,
+            col_configs=self._col_configs,
+        )
+        self._table.grid(row=1, column=0, sticky="nsew")
 
-        for user in users:
-            card = ctk.CTkFrame(users_frame, corner_radius=10)
-            card.pack(fill="x", pady=5)
+    def rebuild(self):
+        for w in self.winfo_children():
+            w.destroy()
+        self._build()
+        self.refresh()
 
-            name = ctk.CTkLabel(card, text=user, font=("Arial", 14))
-            name.pack(side="left", padx=10, pady=10)
+    def refresh(self):
+        if hasattr(self, "_add_user_btn"):
+            if self.controller.is_logged_in:
+                self._add_user_btn.grid()
+            else:
+                self._add_user_btn.grid_remove()
 
-            edit_btn = ctk.CTkButton(card, text="Edit", width=70)
-            edit_btn.pack(side="right", padx=5)
+        self._all_users = [dict(r) for r in self.db.get_all_users()]
+        rows = []
+        for u in self._all_users:
+            is_active = u.get("is_active", 1)
+            status = self.i18n.t("label.active") if is_active else self.i18n.t("label.blocked")
+            rows.append((
+                u.get("full_name") or "",
+                u.get("phone") or "—",
+                status,
+                u["id"],
+            ))
+        self._table.data_versions[0] = rows
+        self._table.load_version(0)
 
-            view_btn = ctk.CTkButton(card, text="View", width=70)
-            view_btn.pack(side="right", padx=5)
+    def _make_row(self, frame, row_data, col_configs=None):
+        full_name, phone, status, user_id = row_data
+        status_color = "#4CAF50" if status == self.i18n.t("label.active") else "#d95050"
 
-    def export_users(self):
-        file_path = filedialog.asksaveasfilename(
-            defaultextension=".txt",
-            filetypes=[
-                ("Text files", "*.txt"),
-                ("CSV files", "*.csv")
-            ]
+        for i, cfg in enumerate(self._col_configs):
+            frame.grid_columnconfigure(i, **cfg)
+
+        name_lbl = ctk.CTkLabel(frame, text=full_name, anchor="w", text_color="black",
+                                 cursor="hand2")
+        name_lbl.grid(row=0, column=0, sticky="ew", padx=(12, 0), pady=6)
+
+        phone_lbl = ctk.CTkLabel(frame, text=phone, anchor="w", text_color="gray")
+        phone_lbl.grid(row=0, column=1, sticky="ew", padx=(8, 0), pady=6)
+
+        status_lbl = ctk.CTkLabel(frame, text=status, anchor="w", text_color=status_color)
+        status_lbl.grid(row=0, column=2, sticky="ew", padx=(8, 0), pady=6)
+
+        if self.controller.is_logged_in:
+            ctk.CTkButton(
+                frame, text="−", width=30, height=26,
+                fg_color="#d95050", hover_color="#c03030",
+                text_color="white", font=("Arial", 16, "bold"),
+                command=lambda uid=user_id: self._delete_user(uid),
+            ).grid(row=0, column=3, padx=8, pady=5)
+
+        open_cmd = lambda uid=user_id: self.open_popup(
+            "view_window", UserViewPopup, self.db, self.i18n, uid, self.refresh, self.controller
+        )
+        for w in (frame, name_lbl, phone_lbl, status_lbl):
+            w.bind("<Button-1>", lambda e, cmd=open_cmd: cmd())
+
+    def open_popup(self, attr_name, popup_class, *args):
+        current = getattr(self, attr_name, None)
+        if current is None or not current.winfo_exists():
+            setattr(self, attr_name, popup_class(self.winfo_toplevel(), *args))
+        else:
+            current.focus()
+
+    def _delete_user(self, user_id: int):
+        user = next((u for u in self._all_users if u["id"] == user_id), None)
+        name = user.get("full_name", "?") if user else "?"
+        self.open_popup(
+            "confirm_delete_window", ConfirmDeletePopup,
+            self.i18n, name, lambda uid=user_id: self._do_delete(uid),
         )
 
-        if file_path:
-            users = ["Murat", "Ali", "Bek"]
-
-            with open(file_path, "w", encoding="utf-8") as f:
-                for user in users:
-                    f.write(user + "\n")
+    def _do_delete(self, user_id: int):
+        self.db.delete_user(user_id)
+        self.refresh()

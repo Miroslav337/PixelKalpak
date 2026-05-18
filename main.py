@@ -1,28 +1,40 @@
+import os
 import customtkinter as ctk
 from PIL import Image
 import constantes as cons
 from database import LibraryDB
-from pages import MainPage, CatalogPage, AdminPage, UsersPage, LogInPage, ProfilePage
+from locale import I18n
+from settings import AppSettings, ACCENT_PRESETS
+from pages import MainPage, CatalogPage, UsersPage, LogInPage, ProfilePage
 
-ctk.set_appearance_mode("light")
-
+_HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.db = LibraryDB()
+        self.settings = AppSettings()
+        ctk.set_appearance_mode(self.settings.theme)
+        colors = ACCENT_PRESETS[self.settings.accent]
+        cons.BLUE = colors["BLUE"]
+        cons.BLUE_ACTIVE = colors["BLUE_ACTIVE"]
+        cons.ACCENT = colors["ACCENT"]
+
+        self.db = LibraryDB(os.path.join(_HERE, "library.db"))
+        self.i18n = I18n(lang=self.settings.language)
         self.geometry("1200x720")
+        self.minsize(900, 600)
         self.configure(fg_color=cons.BG)
         self.title("Library")
         self.is_logged_in = False
+        self.current_admin = None
+        self._current_page = MainPage
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
         self.load_resources()
-
         self.topbar()
 
         container = ctk.CTkFrame(self)
@@ -31,42 +43,43 @@ class App(ctk.CTk):
         container.grid_columnconfigure(0, weight=1)
 
         self.pages = {}
-
-        for Page in (MainPage, CatalogPage, UsersPage, AdminPage, LogInPage, ProfilePage):
-            page = Page(container, self.db, self)
+        for Page in (MainPage, CatalogPage, UsersPage, LogInPage, ProfilePage):
+            page = Page(container, self.db, self.i18n, self)
             self.pages[Page] = page
-
             page.grid(row=1, column=0, sticky="nsew")
 
         self.show_page(MainPage)
 
+    # ─────────────────────────── RESOURCES ─────────────────────────
+
     def load_resources(self):
-        """Загрузка всех изображений один раз при старте"""
-        self.logo_img = ctk.CTkImage(light_image=Image.open("image/logo.jpg"), size=(40, 40))
-        self.img_normal = ctk.CTkImage(light_image=Image.open("image/login.png"), size=(13, 13))
-        self.img_hover = ctk.CTkImage(light_image=Image.open("image/logo.jpg"), size=(13, 13))
+        img_dir = os.path.join(_HERE, "image")
+        self.logo_img = ctk.CTkImage(light_image=Image.open(os.path.join(img_dir, "logo.png")), size=(50, 35))
+        self.img_normal = ctk.CTkImage(light_image=Image.open(os.path.join(img_dir, "login.png")), size=(13, 13))
+        self.img_hover = ctk.CTkImage(light_image=Image.open(os.path.join(img_dir, "login.png")), size=(13, 13))
+
+    # ─────────────────────────── TOPBAR ────────────────────────────
 
     def topbar(self):
-        header = ctk.CTkFrame(self, height=60, fg_color=cons.CARD, corner_radius=15)
-        header.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
+        self.topbar_frame = ctk.CTkFrame(self, height=60, fg_color=cons.CARD, corner_radius=15)
+        self.topbar_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
 
-        header.grid_columnconfigure(0, weight=0)
-        header.grid_columnconfigure(1, weight=30)
-        header.grid_columnconfigure(2, weight=10)
-        header.grid_columnconfigure(3, weight=0)
+        self.topbar_frame.grid_columnconfigure(0, weight=0)
+        self.topbar_frame.grid_columnconfigure(1, weight=30)
+        self.topbar_frame.grid_columnconfigure(2, weight=10)
+        self.topbar_frame.grid_columnconfigure(3, weight=0)
 
-        logo_label = ctk.CTkLabel(header, image=self.logo_img, text="")
-        logo_label.grid(row=0, column=0, padx=15, sticky="w")
-        # logo = ctk.CTkButton(header, image=self.logo_img, compound="top")
-        # logo.grid(row=0, column=0, padx=15, sticky="w")
+        ctk.CTkLabel(self.topbar_frame, image=self.logo_img, text="").grid(
+            row=0, column=0, padx=15, sticky="w"
+        )
+        ctk.CTkLabel(self.topbar_frame, text="Pixel Kalpak", font=("Arial", 20)).grid(
+            row=0, column=1, padx=10, pady=(10, 5), sticky="w"
+        )
 
-        pixel = ctk.CTkLabel(header, text="Pixel Kalpak", font=("Arial", 20))
-        pixel.grid(row=0, column=1, padx=10, pady=(10, 5), sticky="w")
-
-        self.nav_frame = ctk.CTkFrame(header, fg_color="transparent")
+        self.nav_frame = ctk.CTkFrame(self.topbar_frame, fg_color="transparent")
         self.nav_frame.grid(row=0, column=2, sticky="ew")
 
-        self.login_container = ctk.CTkFrame(header, fg_color="transparent")
+        self.login_container = ctk.CTkFrame(self.topbar_frame, fg_color="transparent")
         self.login_container.grid(row=0, column=3, padx=5, sticky="ew")
 
         self.update_login_button()
@@ -76,41 +89,23 @@ class App(ctk.CTk):
             widget.destroy()
 
         buttons_data = [
-            ("main page", MainPage),
-            ("catalog page", CatalogPage),
-            ("admin", AdminPage),
-            ("users", UsersPage),
+            (self.i18n.t("nav.main"),     MainPage),
+            (self.i18n.t("nav.catalog"),  CatalogPage),
+            (self.i18n.t("nav.users"),    UsersPage),
         ]
 
-        column_index = 0
-        for text, page_class in buttons_data:
-            if page_class == current_page_class:
-                self.nav_frame.grid_columnconfigure(column_index, weight=1)
-                btn = ctk.CTkButton(
-                    self.nav_frame,
-                    text=text,
-                    fg_color="transparent",
-                    text_color=cons.BLUE_ACTIVE,
-                    command=lambda p=page_class: self.show_page(p)
-                )
-                btn.grid(row=0, column=column_index, padx=5, sticky="ew")
-                column_index += 1
-            else:
-                self.nav_frame.grid_columnconfigure(column_index, weight=1)
-                btn = ctk.CTkButton(
-                    self.nav_frame,
-                    text=text,
-                    fg_color="transparent",
-                    text_color="black",
-                    hover_color=cons.GRAY,
-                    command=lambda p=page_class: self.show_page(p)
-                )
-                btn.grid(row=0, column=column_index, padx=5, sticky="ew")
-                column_index += 1
-
-    def show_page(self, page_class):
-        self.pages[page_class].tkraise()
-        self.update_navigation(page_class)
+        for col, (text, page_class) in enumerate(buttons_data):
+            self.nav_frame.grid_columnconfigure(col, weight=1)
+            is_active = page_class == current_page_class
+            btn = ctk.CTkButton(
+                self.nav_frame,
+                text=text,
+                fg_color="transparent",
+                text_color=cons.BLUE_ACTIVE if is_active else "black",
+                hover_color=cons.GRAY,
+                command=lambda p=page_class: self.show_page(p),
+            )
+            btn.grid(row=0, column=col, padx=5, sticky="ew")
 
     def update_login_button(self):
         for widget in self.login_container.winfo_children():
@@ -118,39 +113,77 @@ class App(ctk.CTk):
 
         if not self.is_logged_in:
             self.login = ctk.CTkButton(
-                self.login_container, text="log in", image=self.img_normal,
-                compound="right", width=100, border_spacing=10,
+                self.login_container,
+                text=self.i18n.t("btn.login"),
+                image=self.img_normal, compound="right",
+                width=100, border_spacing=10,
                 fg_color=cons.BLUE, text_color="black", hover_color=cons.BLUE_ACTIVE,
-                command=lambda: self.show_page(LogInPage)
+                command=lambda: self.show_page(LogInPage),
             )
         else:
             self.login = ctk.CTkButton(
-                self.login_container, text="Profile", image=self.img_normal,
-                compound="right", width=100, border_spacing=10,
+                self.login_container,
+                text=self.i18n.t("page.profile"),
+                image=self.img_normal, compound="right",
+                width=100, border_spacing=10,
                 fg_color=cons.ACCENT, text_color="black", hover_color=cons.GRAY,
-                command=lambda: self.show_page(ProfilePage)
+                command=lambda: self.show_page(ProfilePage),
             )
 
         self.login.pack(fill="both", expand=True)
         self.login.bind("<Enter>", self.on_enter)
         self.login.bind("<Leave>", self.on_leave)
 
-    def set_authorized(self):
-        self.is_logged_in = True
-        self.update_login_button()
-        self.show_page(MainPage)
-
-    def set_logged_out(self):
-        """бесполезный метод для проверки"""
-        self.is_logged_in = False
-        self.update_login_button()
-        self.show_page(MainPage)
-
     def on_enter(self, event):
         self.login.configure(image=self.img_hover)
 
     def on_leave(self, event):
         self.login.configure(image=self.img_normal)
+
+    # ─────────────────────────── NAVIGATION ────────────────────────
+
+    def show_page(self, page_class):
+        self._current_page = page_class
+        self.pages[page_class].tkraise()
+        self.update_navigation(page_class)
+
+    # ─────────────────────────── AUTH ──────────────────────────────
+
+    def set_authorized(self, admin: dict):
+        self.current_admin = admin
+        self.is_logged_in = True
+        self.pages[ProfilePage].refresh()
+        self.pages[CatalogPage].refresh()
+        self.pages[UsersPage].refresh()
+        self.update_login_button()
+        self.show_page(MainPage)
+
+    def set_logged_out(self):
+        self.current_admin = None
+        self.is_logged_in = False
+        self.pages[ProfilePage].refresh()
+        self.pages[CatalogPage].refresh()
+        self.pages[UsersPage].refresh()
+        self.update_login_button()
+        self.show_page(MainPage)
+
+    # ─────────────────────────── SETTINGS ──────────────────────────
+
+    def apply_accent(self, preset_name: str):
+        colors = ACCENT_PRESETS[preset_name]
+        cons.BLUE = colors["BLUE"]
+        cons.BLUE_ACTIVE = colors["BLUE_ACTIVE"]
+        cons.ACCENT = colors["ACCENT"]
+        self.topbar_frame.destroy()
+        self.topbar()
+        self.update_navigation(self._current_page)
+
+    def rebuild_ui(self):
+        for page in self.pages.values():
+            page.rebuild()
+        self.update_navigation(self._current_page)
+        self.update_login_button()
+
 
 if __name__ == "__main__":
     app = App()
