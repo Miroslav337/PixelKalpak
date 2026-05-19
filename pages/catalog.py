@@ -112,7 +112,7 @@ class CatalogPage(ctk.CTkFrame):
         for i, cfg in enumerate(self._col_configs):
             frame.grid_columnconfigure(i, **cfg)
 
-        title_lbl = ctk.CTkLabel(frame, text=title, anchor="w", text_color="black")
+        title_lbl = ctk.CTkLabel(frame, text=title, anchor="w", text_color=cons.TEXT)
         title_lbl.grid(row=0, column=0, sticky="ew", padx=(12, 0), pady=6)
 
         author_lbl = ctk.CTkLabel(frame, text=author, anchor="w", text_color="gray")

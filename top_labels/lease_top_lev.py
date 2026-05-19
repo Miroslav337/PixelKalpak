@@ -26,17 +26,17 @@ class LeaseViewPopup(TopLevel):
     def _build(self):
         # ── Title bar ───────────────────────────────────────────────
         title_bar = ctk.CTkFrame(
-            self.main_frame, fg_color=cons.BLUE, corner_radius=0, height=40
+            self.main_frame, fg_color=cons.BLUE_ACTIVE, corner_radius=0, height=40
         )
         title_bar.pack(fill="x")
         title_bar.pack_propagate(False)
         ctk.CTkLabel(
             title_bar, text=self._title,
-            font=("Arial", 13, "bold"), text_color="black",
+            font=("Arial", 13, "bold"), text_color="white",
         ).pack(side="left", padx=12, pady=8)
         ctk.CTkButton(
             title_bar, text="✕", width=32, height=28,
-            fg_color="transparent", hover_color="#d95050", text_color="black",
+            fg_color="transparent", hover_color="#d95050", text_color="white",
             command=self.on_close,
         ).pack(side="right", padx=4, pady=4)
 

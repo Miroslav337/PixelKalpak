@@ -231,13 +231,13 @@ class MainPage(ctk.CTkFrame):
                 colors=colors[: len(names)],
                 wedgeprops=dict(width=0.5),
                 startangle=90,
-                textprops={"fontsize": 8},
+                textprops={"fontsize": 8, "color": cons.TEXT},
             )
         else:
             ax.text(0.5, 0.5, "—", ha="center", va="center",
-                    transform=ax.transAxes, color="gray", fontsize=14)
+                    transform=ax.transAxes, color=cons.TEXT, fontsize=14)
 
-        ax.set_title(self.i18n.t("table.catalog"), fontsize=9, color="gray", pad=4)
+        ax.set_title(self.i18n.t("table.catalog"), fontsize=9, color=cons.TEXT, pad=4)
         fig.tight_layout(pad=0.5)
 
         canvas = FigureCanvasTkAgg(fig, master=frame)
@@ -258,13 +258,14 @@ class MainPage(ctk.CTkFrame):
 
         if months:
             ax.bar(months, counts, color=cons.BLUE, width=0.5)
-            ax.tick_params(axis="x", rotation=30, labelsize=8)
+            ax.tick_params(axis="x", rotation=30, labelsize=8, colors=cons.TEXT)
         else:
             ax.text(0.5, 0.5, "—", ha="center", va="center",
-                    transform=ax.transAxes, color="gray", fontsize=14)
+                    transform=ax.transAxes, color=cons.TEXT, fontsize=14)
 
-        ax.tick_params(axis="y", labelsize=8)
+        ax.tick_params(axis="y", labelsize=8, colors=cons.TEXT)
         ax.spines[["top", "right"]].set_visible(False)
+        ax.spines[["bottom", "left"]].set_color(cons.TEXT)
         fig.tight_layout(pad=0.8)
 
         canvas = FigureCanvasTkAgg(fig, master=frame)

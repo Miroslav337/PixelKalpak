@@ -46,17 +46,17 @@ class ExportPopup(TopLevel):
 
     def _build(self):
         title_bar = ctk.CTkFrame(
-            self.main_frame, fg_color=cons.BLUE, corner_radius=0, height=40
+            self.main_frame, fg_color=cons.BLUE_ACTIVE, corner_radius=0, height=40
         )
         title_bar.pack(fill="x")
         title_bar.pack_propagate(False)
         ctk.CTkLabel(
             title_bar, text=self.i18n.t("btn.export"),
-            font=("Arial", 14, "bold"), text_color="black",
+            font=("Arial", 14, "bold"), text_color="white",
         ).pack(side="left", padx=12, pady=8)
         ctk.CTkButton(
             title_bar, text="✕", width=32, height=28,
-            fg_color="transparent", hover_color="#d95050", text_color="black",
+            fg_color="transparent", hover_color="#d95050", text_color="white",
             command=self.on_close,
         ).pack(side="right", padx=4, pady=4)
 
@@ -79,7 +79,7 @@ class ExportPopup(TopLevel):
             form, variable=self._fmt_var,
             values=["CSV", "TXT", "XLSX", "JSON"],
             fg_color=cons.CARD, button_color=cons.BLUE,
-            button_hover_color=cons.BLUE_ACTIVE, text_color="black",
+            button_hover_color=cons.BLUE_ACTIVE, text_color=cons.TEXT,
             command=self._on_fmt_change,
         ).grid(row=r, column=1, sticky="ew", pady=(0, 6))
         r += 1
@@ -93,7 +93,7 @@ class ExportPopup(TopLevel):
             form, variable=self._sep_var,
             values=[",", ";", "Tab"],
             fg_color=cons.CARD, button_color=cons.BLUE,
-            button_hover_color=cons.BLUE_ACTIVE, text_color="black",
+            button_hover_color=cons.BLUE_ACTIVE, text_color=cons.TEXT,
         )
         self._sep_menu.grid(row=r, column=1, sticky="ew", pady=(0, 10))
         r += 1
@@ -173,11 +173,19 @@ class ExportPopup(TopLevel):
             "JSON": [("JSON files",  "*.json")],
         }
 
+        self.grab_release()
+        self.withdraw()
+
         path = filedialog.asksaveasfilename(
             defaultextension=ext_map[fmt],
             filetypes=type_map[fmt],
             initialfile=self.filename_hint,
         )
+
+        self.deiconify()
+        self.grab_set()
+        self.focus_force()
+
         if not path:
             return
 

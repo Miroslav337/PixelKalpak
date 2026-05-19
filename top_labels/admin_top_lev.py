@@ -13,7 +13,7 @@ class AddBook(TopLevel):
 
     def _build(self):
         # Title bar
-        title_bar = ctk.CTkFrame(self.main_frame, fg_color=cons.BLUE, corner_radius=0, height=40)
+        title_bar = ctk.CTkFrame(self.main_frame, fg_color=cons.BLUE_ACTIVE, corner_radius=0, height=40)
         title_bar.pack(fill="x")
         title_bar.pack_propagate(False)
         ctk.CTkLabel(
@@ -22,7 +22,7 @@ class AddBook(TopLevel):
         ).pack(side="left", padx=12, pady=8)
         ctk.CTkButton(
             title_bar, text="✕", width=32, height=28,
-            fg_color="transparent", hover_color="#d95050", text_color="black",
+            fg_color="transparent", hover_color="#d95050", text_color="white",
             command=self.on_close
         ).pack(side="right", padx=4, pady=4)
 
@@ -188,16 +188,16 @@ class EditBookPopup(TopLevel):
         genres = self.db.get_book_genres(self.book_id)
         genres_str = ", ".join(g["name"] for g in genres) if genres else ""
 
-        title_bar = ctk.CTkFrame(self.main_frame, fg_color=cons.BLUE, corner_radius=0, height=40)
+        title_bar = ctk.CTkFrame(self.main_frame, fg_color=cons.BLUE_ACTIVE, corner_radius=0, height=40)
         title_bar.pack(fill="x")
         title_bar.pack_propagate(False)
         ctk.CTkLabel(
             title_bar, text=self.i18n.t("popup.edit_book"),
-            font=("Arial", 14, "bold"), text_color="black",
+            font=("Arial", 14, "bold"), text_color="white",
         ).pack(side="left", padx=12, pady=8)
         ctk.CTkButton(
             title_bar, text="✕", width=32, height=28,
-            fg_color="transparent", hover_color="#d95050", text_color="black",
+            fg_color="transparent", hover_color="#d95050", text_color="white",
             command=self.on_close,
         ).pack(side="right", padx=4, pady=4)
 
@@ -310,16 +310,16 @@ class ChangePasswordPopup(TopLevel):
         self._build()
 
     def _build(self):
-        title_bar = ctk.CTkFrame(self.main_frame, fg_color=cons.BLUE, corner_radius=0, height=40)
+        title_bar = ctk.CTkFrame(self.main_frame, fg_color=cons.BLUE_ACTIVE, corner_radius=0, height=40)
         title_bar.pack(fill="x")
         title_bar.pack_propagate(False)
         ctk.CTkLabel(
             title_bar, text=self.i18n.t("popup.change_password"),
-            font=("Arial", 14, "bold"), text_color="black",
+            font=("Arial", 14, "bold"), text_color="white",
         ).pack(side="left", padx=12, pady=8)
         ctk.CTkButton(
             title_bar, text="✕", width=32, height=28,
-            fg_color="transparent", hover_color="#d95050", text_color="black",
+            fg_color="transparent", hover_color="#d95050", text_color="white",
             command=self.on_close,
         ).pack(side="right", padx=4, pady=4)
 
@@ -405,16 +405,16 @@ class AddAdminPopup(TopLevel):
         self._build()
 
     def _build(self):
-        title_bar = ctk.CTkFrame(self.main_frame, fg_color=cons.BLUE, corner_radius=0, height=40)
+        title_bar = ctk.CTkFrame(self.main_frame, fg_color=cons.BLUE_ACTIVE, corner_radius=0, height=40)
         title_bar.pack(fill="x")
         title_bar.pack_propagate(False)
         ctk.CTkLabel(
             title_bar, text=self.i18n.t("popup.add_admin"),
-            font=("Arial", 14, "bold"), text_color="black",
+            font=("Arial", 14, "bold"), text_color="white",
         ).pack(side="left", padx=12, pady=8)
         ctk.CTkButton(
             title_bar, text="✕", width=32, height=28,
-            fg_color="transparent", hover_color="#d95050", text_color="black",
+            fg_color="transparent", hover_color="#d95050", text_color="white",
             command=self.on_close,
         ).pack(side="right", padx=4, pady=4)
 
@@ -448,7 +448,7 @@ class AddAdminPopup(TopLevel):
             form, variable=self._role_var,
             values=["admin", "superadmin"],
             fg_color=cons.CARD, button_color=cons.BLUE,
-            button_hover_color=cons.BLUE_ACTIVE, text_color="black",
+            button_hover_color=cons.BLUE_ACTIVE, text_color=cons.TEXT,
         ).grid(row=7, column=0, sticky="ew", pady=(2, 6))
 
         self._error = ctk.CTkLabel(form, text="", text_color="red", anchor="w")

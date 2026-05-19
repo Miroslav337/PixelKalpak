@@ -115,7 +115,7 @@ class UsersPage(ctk.CTkFrame):
         for i, cfg in enumerate(self._col_configs):
             frame.grid_columnconfigure(i, **cfg)
 
-        name_lbl = ctk.CTkLabel(frame, text=full_name, anchor="w", text_color="black",
+        name_lbl = ctk.CTkLabel(frame, text=full_name, anchor="w", text_color=cons.TEXT,
                                  cursor="hand2")
         name_lbl.grid(row=0, column=0, sticky="ew", padx=(12, 0), pady=6)
 

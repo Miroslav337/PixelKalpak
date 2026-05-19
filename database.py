@@ -181,6 +181,12 @@ class LibraryDB:
 
         genres = fields.pop("genres", None)
 
+        if "total_count" in fields:
+            cur = self.get_book(book_id)
+            if cur:
+                on_loan = cur["total_count"] - cur["available_count"]
+                fields["available_count"] = max(0, int(fields["total_count"]) - on_loan)
+
         db_fields = {k: v for k, v in fields.items() if k in allowed | {"author_id"}}
         changed = bool(db_fields)
         if db_fields:

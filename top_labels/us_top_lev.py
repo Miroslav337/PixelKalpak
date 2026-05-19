@@ -21,11 +21,11 @@ class AddUserPopup(TopLevel):
         title_bar.pack_propagate(False)
         ctk.CTkLabel(
             title_bar, text=self.i18n.t("popup.add_user"),
-            font=("Arial", 14, "bold"), text_color="black",
+            font=("Arial", 14, "bold"), text_color="white",
         ).pack(side="left", padx=12, pady=8)
         ctk.CTkButton(
             title_bar, text="✕", width=32, height=28,
-            fg_color="transparent", hover_color="#d95050", text_color="black",
+            fg_color="transparent", hover_color="#d95050", text_color="white",
             command=self.on_close,
         ).pack(side="right", padx=4, pady=4)
 
@@ -61,7 +61,7 @@ class AddUserPopup(TopLevel):
             fg_color=cons.CARD,
             button_color=cons.BLUE,
             button_hover_color=cons.BLUE_ACTIVE,
-            text_color="black",
+            text_color=cons.TEXT,
         ).grid(row=5, column=0, sticky="ew", pady=(2, 6))
 
         self.error_label = ctk.CTkLabel(form, text="", text_color="red", anchor="w")
@@ -120,17 +120,17 @@ class UserViewPopup(TopLevel):
 
         # Title bar (shows user name)
         title_bar = ctk.CTkFrame(
-            self.main_frame, fg_color=cons.BLUE, corner_radius=0, height=40
+            self.main_frame, fg_color=cons.BLUE_ACTIVE, corner_radius=0, height=40
         )
         title_bar.pack(fill="x")
         title_bar.pack_propagate(False)
         ctk.CTkLabel(
             title_bar, text=user.get("full_name", "—"),
-            font=("Arial", 14, "bold"), text_color="black",
+            font=("Arial", 14, "bold"), text_color="white",
         ).pack(side="left", padx=12, pady=8)
         ctk.CTkButton(
             title_bar, text="✕", width=32, height=28,
-            fg_color="transparent", hover_color="#d95050", text_color="black",
+            fg_color="transparent", hover_color="#d95050", text_color="white",
             command=self.on_close,
         ).pack(side="right", padx=4, pady=4)
 
@@ -316,17 +316,17 @@ class UserEditPopup(TopLevel):
         user = dict(user_row) if user_row else {}
 
         title_bar = ctk.CTkFrame(
-            self.main_frame, fg_color=cons.BLUE, corner_radius=0, height=40
+            self.main_frame, fg_color=cons.BLUE_ACTIVE, corner_radius=0, height=40
         )
         title_bar.pack(fill="x")
         title_bar.pack_propagate(False)
         ctk.CTkLabel(
             title_bar, text=self.i18n.t("popup.edit_user"),
-            font=("Arial", 14, "bold"), text_color="black",
+            font=("Arial", 14, "bold"), text_color="white",
         ).pack(side="left", padx=12, pady=8)
         ctk.CTkButton(
             title_bar, text="✕", width=32, height=28,
-            fg_color="transparent", hover_color="#d95050", text_color="black",
+            fg_color="transparent", hover_color="#d95050", text_color="white",
             command=self.on_close,
         ).pack(side="right", padx=4, pady=4)
 
@@ -366,7 +366,7 @@ class UserEditPopup(TopLevel):
             fg_color=cons.CARD,
             button_color=cons.BLUE,
             button_hover_color=cons.BLUE_ACTIVE,
-            text_color="black",
+            text_color=cons.TEXT,
         ).grid(row=r, column=0, sticky="ew", padx=6, pady=(2, 10)); r += 1
 
         self._grid_section_header(form, self.i18n.t("label.notes"), r); r += 1
@@ -545,18 +545,18 @@ class IssueBookPopup(TopLevel):
 
         # ── Title bar ───────────────────────────────────────────────
         title_bar = ctk.CTkFrame(
-            self.main_frame, fg_color=cons.BLUE, corner_radius=0, height=40
+            self.main_frame, fg_color=cons.BLUE_ACTIVE, corner_radius=0, height=40
         )
         title_bar.pack(fill="x")
         title_bar.pack_propagate(False)
         ctk.CTkLabel(
             title_bar,
             text=f"{self.i18n.t('btn.issue')} — {user_name}",
-            font=("Arial", 13, "bold"), text_color="black",
+            font=("Arial", 13, "bold"), text_color="white",
         ).pack(side="left", padx=12, pady=8)
         ctk.CTkButton(
             title_bar, text="✕", width=32, height=28,
-            fg_color="transparent", hover_color="#d95050", text_color="black",
+            fg_color="transparent", hover_color="#d95050", text_color="white",
             command=self.on_close,
         ).pack(side="right", padx=4, pady=4)
 
@@ -634,19 +634,19 @@ class IssueBookPopup(TopLevel):
             date_row, variable=self._day_var,
             values=[f"{d:02d}" for d in range(1, 32)],
             fg_color=cons.CARD, button_color=cons.BLUE,
-            button_hover_color=cons.BLUE_ACTIVE, text_color="black",
+            button_hover_color=cons.BLUE_ACTIVE, text_color=cons.TEXT,
         ).grid(row=0, column=0, sticky="ew", padx=(0, 4))
         ctk.CTkOptionMenu(
             date_row, variable=self._month_var,
             values=[f"{m:02d}" for m in range(1, 13)],
             fg_color=cons.CARD, button_color=cons.BLUE,
-            button_hover_color=cons.BLUE_ACTIVE, text_color="black",
+            button_hover_color=cons.BLUE_ACTIVE, text_color=cons.TEXT,
         ).grid(row=0, column=1, sticky="ew", padx=4)
         ctk.CTkOptionMenu(
             date_row, variable=self._year_var,
             values=[str(date.today().year + i) for i in range(4)],
             fg_color=cons.CARD, button_color=cons.BLUE,
-            button_hover_color=cons.BLUE_ACTIVE, text_color="black",
+            button_hover_color=cons.BLUE_ACTIVE, text_color=cons.TEXT,
         ).grid(row=0, column=2, sticky="ew", padx=(4, 0))
 
 
@@ -663,7 +663,7 @@ class IssueBookPopup(TopLevel):
                 text=lbl,
                 anchor="w",
                 fg_color=cons.BLUE if lbl == self._selected_label else "transparent",
-                text_color="black",
+                text_color=cons.TEXT,
                 hover_color=cons.BLUE_ACTIVE,
                 command=lambda l=lbl, bid=book_id: self._select_book(l, bid),
             )

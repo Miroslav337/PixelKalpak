@@ -170,7 +170,7 @@ class ProfilePage(ctk.CTkFrame):
                 lang_row, text=code.upper(), width=56,
                 fg_color=cons.BLUE_ACTIVE if active else "transparent",
                 border_width=1, border_color=cons.BLUE,
-                text_color="black", hover_color=cons.GRAY,
+                text_color=cons.TEXT, hover_color=cons.GRAY,
                 command=lambda c=code: self._set_lang(c),
             )
             btn.pack(side="left", padx=3)
@@ -193,7 +193,7 @@ class ProfilePage(ctk.CTkFrame):
                 theme_row, text=self.i18n.t(key), width=80,
                 fg_color=cons.BLUE_ACTIVE if active else "transparent",
                 border_width=1, border_color=cons.BLUE,
-                text_color="black", hover_color=cons.GRAY,
+                text_color=cons.TEXT, hover_color=cons.GRAY,
                 command=lambda m=mode: self._set_theme(m),
             )
             btn.pack(side="left", padx=3)
@@ -412,8 +412,15 @@ class ProfilePage(ctk.CTkFrame):
     def _set_theme(self, mode: str):
         ctk.set_appearance_mode(mode)
         self.controller.settings.set("theme", mode)
+        palette = cons.DARK_COLORS if mode == "dark" else cons.LIGHT_COLORS
+        cons.BG   = palette["BG"]
+        cons.CARD = palette["CARD"]
+        cons.GRAY = palette["GRAY"]
+        cons.TEXT = palette["TEXT"]
         for m, btn in self._theme_btns.items():
             btn.configure(fg_color=cons.BLUE_ACTIVE if m == mode else "transparent")
+        # delay so CTK finishes its own appearance-mode callbacks before we destroy widgets
+        self.controller.after(80, self.controller.rebuild_ui)
 
     def _set_accent(self, name: str):
         self.controller.settings.set("accent", name)
